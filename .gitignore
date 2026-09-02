@@ -1,0 +1,16 @@
+# compiled output
+dist
+tmp
+*.tsbuildinfo
+
+# dependencies
+node_modules
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# local editor/agent config
+.claude/
+.vscode/
+.idea/

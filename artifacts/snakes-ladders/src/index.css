@@ -1,0 +1,340 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Nunito", "Comic Sans MS", cursive, sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+* {
+  -webkit-user-drag: none;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: #f0fdf4;
+  color: #14532d;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+.screen {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.safe-top { padding-top: max(0.75rem, env(safe-area-inset-top)); }
+.safe-bottom { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+
+/* Meadow sky background */
+.game-bg {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(180deg, #dbeafe 0%, #ecfeff 45%, #dcfce7 100%);
+}
+.game-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.7) 0%, transparent 30%),
+    radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.5) 0%, transparent 30%),
+    radial-gradient(ellipse at 50% 110%, rgba(74, 222, 128, 0.35) 0%, transparent 50%);
+}
+
+.game-btn {
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  touch-action: manipulation;
+}
+.game-btn:active { transform: scale(0.94); }
+.game-btn:disabled { opacity: 0.55; }
+
+/* ------------------------------------------------------------------ */
+/* Candy buttons and titles                                            */
+/* ------------------------------------------------------------------ */
+
+.title-candy {
+  font-family: "Fredoka", "Nunito", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #16a34a;
+  background: linear-gradient(180deg, #4ade80 0%, #16a34a 55%, #15803d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 0 rgba(255, 255, 255, 0.9)) drop-shadow(0 5px 6px rgba(20, 80, 40, 0.25));
+}
+
+.candy {
+  position: relative;
+  border: none;
+  box-shadow:
+    inset 0 -4px 0 rgba(0, 0, 0, 0.12),
+    inset 0 2px 0 rgba(255, 255, 255, 0.7),
+    0 6px 0 rgba(0, 0, 0, 0.14),
+    0 10px 16px rgba(0, 0, 0, 0.18);
+}
+.candy::before {
+  content: "";
+  position: absolute;
+  inset: 3px 6px auto 6px;
+  height: 42%;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+.candy:active {
+  transform: translateY(5px) scale(0.98);
+  box-shadow:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+    inset 0 2px 0 rgba(255, 255, 255, 0.7),
+    0 1px 0 rgba(0, 0, 0, 0.14),
+    0 3px 6px rgba(0, 0, 0, 0.18);
+}
+.candy-amber { box-shadow: inset 0 -4px 0 rgba(0,0,0,.12), inset 0 2px 0 rgba(255,255,255,.7), 0 6px 0 #c77d0a, 0 10px 16px rgba(0,0,0,.18); }
+.candy-rose { box-shadow: inset 0 -4px 0 rgba(0,0,0,.12), inset 0 2px 0 rgba(255,255,255,.6), 0 6px 0 #be123c, 0 10px 16px rgba(0,0,0,.2); }
+.candy-sky { box-shadow: inset 0 -4px 0 rgba(0,0,0,.12), inset 0 2px 0 rgba(255,255,255,.6), 0 6px 0 #0369a1, 0 10px 16px rgba(0,0,0,.2); }
+.candy-violet { box-shadow: inset 0 -4px 0 rgba(0,0,0,.12), inset 0 2px 0 rgba(255,255,255,.6), 0 6px 0 #6d28d9, 0 10px 16px rgba(0,0,0,.2); }
+.candy-emerald { box-shadow: inset 0 -4px 0 rgba(0,0,0,.12), inset 0 2px 0 rgba(255,255,255,.6), 0 6px 0 #047857, 0 10px 16px rgba(0,0,0,.2); }
+.candy-orange { box-shadow: inset 0 -4px 0 rgba(0,0,0,.12), inset 0 2px 0 rgba(255,255,255,.6), 0 6px 0 #c2410c, 0 10px 16px rgba(0,0,0,.2); }
+
+.mode-card { transition: transform 0.15s ease; }
+.mode-card:hover { transform: translateY(-3px); }
+
+.modal-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+  box-shadow: 0 30px 60px rgba(20, 60, 40, 0.35), inset 0 2px 0 #fff;
+}
+
+/* ------------------------------------------------------------------ */
+/* Play screen layout: board beside the panel in landscape, above it   */
+/* in portrait. The board is as big as the space allows.               */
+/* ------------------------------------------------------------------ */
+
+.play-area {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 12px 12px;
+}
+.board-wrap {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.board {
+  position: relative;
+  width: min(100cqw, calc(100cqh * 10 / 10.9));
+  aspect-ratio: 10 / 10.9;
+  border-radius: 14px;
+  background: #fffdf7;
+  box-shadow:
+    inset 0 0 0 4px rgba(255, 255, 255, 0.9),
+    0 18px 30px rgba(20, 60, 40, 0.25);
+}
+.board > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+}
+.side-panel {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+@media (orientation: landscape) {
+  .play-area { flex-direction: row; }
+  .side-panel {
+    flex-direction: column;
+    width: clamp(180px, 24vw, 260px);
+    justify-content: center;
+    gap: 16px;
+  }
+}
+
+/* Player cards */
+.player-card {
+  background: rgba(255, 255, 255, 0.8);
+  border: 4px solid transparent;
+  border-radius: 24px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  box-shadow: 0 6px 14px rgba(20, 60, 40, 0.15);
+}
+.player-card.is-active {
+  transform: scale(1.05);
+  border-color: var(--player);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--player) 35%, transparent), 0 10px 22px rgba(20, 60, 40, 0.25);
+}
+.player-card.is-winner {
+  border-color: #fbbf24;
+  box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.45), 0 10px 22px rgba(20, 60, 40, 0.25);
+}
+.thinking-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: think 1s ease-in-out infinite;
+}
+@keyframes think {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* Dice */
+.dice {
+  /* One size variable so the padding scales with the dice, not with the panel it sits in. */
+  --d: clamp(88px, 14vmin, 128px);
+  width: var(--d);
+  height: var(--d);
+  flex-shrink: 0;
+  border-radius: 22%;
+  background: linear-gradient(160deg, #ffffff 0%, #eef2ff 100%);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: calc(var(--d) * 0.16);
+  gap: calc(var(--d) * 0.05);
+  cursor: pointer;
+  touch-action: manipulation;
+  border: none;
+}
+.dice.is-ready { animation: dice-pulse 1.2s ease-in-out infinite; }
+.dice.is-rolling { animation: dice-shake 0.12s linear infinite; }
+.dice:disabled { cursor: default; }
+.pip {
+  border-radius: 9999px;
+  background: #1f2937;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.08s, transform 0.08s;
+}
+.pip.on { opacity: 1; transform: scale(1); }
+@keyframes dice-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+@keyframes dice-shake {
+  0% { transform: rotate(-10deg) translate(-3px, 2px); }
+  25% { transform: rotate(8deg) translate(3px, -2px); }
+  50% { transform: rotate(-6deg) translate(2px, 3px); }
+  75% { transform: rotate(10deg) translate(-2px, -3px); }
+  100% { transform: rotate(-10deg) translate(-3px, 2px); }
+}
+
+/* Tokens slide between squares; the inner piece bounces on each hop */
+.token {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+  transition-property: left, top;
+  transition-timing-function: cubic-bezier(0.3, 0.9, 0.4, 1.05);
+  will-change: left, top;
+}
+.token.is-sliding { transition-timing-function: ease-in-out; z-index: 12; }
+.token-face {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  background: #fff;
+  border: 3px solid var(--player);
+  box-shadow: 0 5px 8px rgba(20, 40, 30, 0.35), inset 0 -3px 0 rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.token-hop { animation: hop 0.2s ease-in-out; }
+@keyframes hop {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-38%) scale(1.15); }
+}
+.token-nope { animation: wiggle 0.5s ease-in-out; }
+.token-idle-active { animation: token-bob 1.4s ease-in-out infinite; }
+@keyframes token-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12%); }
+}
+@keyframes wiggle {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px) rotate(-8deg); }
+  50% { transform: translateX(6px) rotate(8deg); }
+  75% { transform: translateX(-4px) rotate(-5deg); }
+}
+
+/* Modals and celebrations */
+@keyframes bounce-in {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.1); opacity: 1; }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.bounce-in { animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+.confetti-piece {
+  position: fixed;
+  animation: confetti-fall linear forwards;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.bob { display: inline-block; animation: bob 2.2s ease-in-out infinite; }
+@keyframes bob {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-8px) rotate(4deg); }
+}
+.wiggle-slow { display: inline-block; animation: wiggle-slow 3s ease-in-out infinite; }
+@keyframes wiggle-slow {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(6deg); }
+}
+
+/* Token picker */
+.pick {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border: 4px solid transparent;
+}
+.pick.is-picked {
+  transform: scale(1.12);
+  border-color: var(--player);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--player) 35%, transparent);
+}
+.pick.is-taken { opacity: 0.3; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
