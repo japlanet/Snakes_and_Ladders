@@ -187,6 +187,16 @@ export function GamePage({ initial, onMenu, onPlayAgain }: GamePageProps) {
       const step = c.result.steps[c.next];
       if (!step || step.kind !== "hop") return;
       const idx = c.result.player;
+      const hops = c.result.steps.filter(s => s.kind === "hop");
+      const landing = hops[hops.length - 1].to;
+      if (square === landing && square !== step.to) {
+        // Counted in their head and tapped where the roll lands: the piece hops the rest of the way itself.
+        countingRef.current = null;
+        setCounting(null);
+        if (!(await animate(idx, c.result.steps, c.next))) return;
+        await commit(c.result);
+        return;
+      }
       if (square !== step.to) {
         const wrong = { ...c, wrong: c.wrong + 1 };
         countingRef.current = wrong;
