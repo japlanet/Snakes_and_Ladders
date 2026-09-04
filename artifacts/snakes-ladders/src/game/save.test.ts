@@ -31,22 +31,27 @@ Object.defineProperty(globalThis, "localStorage", { value: mem, configurable: tr
 beforeEach(() => mem.clear());
 
 const fresh = () =>
-  newGame([
-    { name: "A", token: "🐸", kind: "human" },
-    { name: "B", token: "🤖", kind: "cpu" },
-  ]);
+  newGame(
+    [
+      { name: "A", token: "🐸", kind: "human" },
+      { name: "B", token: "🤖", kind: "cpu" },
+    ],
+    { boardId: "ocean", manual: true },
+  );
 
-test("a stored game round-trips", () => {
+test("a stored game round-trips, board and mode included", () => {
   const s = playTurn(fresh(), 3).state;
   storeGame(s);
   assert.deepEqual(loadGame(), s);
+  assert.equal(loadGame()?.boardId, "ocean");
+  assert.equal(loadGame()?.manual, true);
 });
 
-test("nothing stored, or junk, loads as null", () => {
+test("nothing stored, junk, or an old save format loads as null", () => {
   assert.equal(loadGame(), null);
   mem.setItem(GAME_KEY, "not json");
   assert.equal(loadGame(), null);
-  mem.setItem(GAME_KEY, JSON.stringify({ v: 2 }));
+  mem.setItem(GAME_KEY, JSON.stringify({ ...fresh(), v: 1 }));
   assert.equal(loadGame(), null);
 });
 
@@ -63,13 +68,15 @@ test("the validator rejects broken states", () => {
   const good = fresh();
   assert.ok(isGameState(good));
   assert.ok(!isGameState(null));
+  assert.ok(!isGameState({ ...good, boardId: "moon" }));
+  assert.ok(!isGameState({ ...good, manual: "yes" }));
   assert.ok(!isGameState({ ...good, turn: 5 }));
   assert.ok(!isGameState({ ...good, phase: "moving" }));
   assert.ok(!isGameState({ ...good, lastRoll: 9 }));
   assert.ok(!isGameState({ ...good, players: [good.players[0]] }));
   assert.ok(!isGameState({ ...good, players: good.players.map(p => ({ ...p, pos: 101 })) }));
   assert.ok(!isGameState({ ...good, players: good.players.map(p => ({ ...p, kind: "alien" })) }));
-  assert.ok(!isGameState({ ...good, rules: { exactFinish: "yes", sixAgain: true } }));
+  assert.ok(!isGameState({ ...good, rules: { exactFinish: "yes" } }));
 });
 
 test("clear and erase remove what we stored and nothing else", () => {

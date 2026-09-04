@@ -5,12 +5,17 @@ sharing the screen. Little reading needed: the animals, the dice and the board d
 
 - **1 player** races Robo 🤖, who rolls by itself after a short think. **2 players** take turns
   tapping the same dice. Each player picks an animal on the way in.
-- The board is the classic 10 by 10 with eight ladders and eight snakes. Tokens hop one square
-  at a time with a boing per hop, then climb (bright arpeggio) or slide (hiss) when they land on
-  a ladder foot or a snake head.
-- Rules, set from the small "Parents" link on the home screen: **a six rolls again** (on by
-  default) and **exact finish** (off by default, so any roll past 100 wins; on means an
-  overshooting roll is lost, the way grown-ups play).
+- **Four boards**, each with its own snakes-and-ladders layout and colours: Meadow 🌼, Ocean 🌊,
+  Space 🚀 and Candy 🍭. Pick one on the animal screen; the last choice is remembered.
+- **Two ways to move.** By default tokens hop one square at a time by themselves, with a boing
+  per hop, then climb (bright arpeggio) or slide (hiss) on a ladder foot or a snake head. Switch
+  the home-screen toggle to **"I move my piece"** and the player has to count the roll out
+  themselves, tapping the next square each time; a wrong tap wiggles the piece, and after two
+  wrong taps the right square starts to pulse. Ladders and snakes still play by themselves once
+  the count is done. Robo always moves its own piece.
+- One rule option, set from the small "Parents" link on the home screen: **exact finish** (off by
+  default, so any roll past 100 wins; on means an overshooting roll is lost, the way grown-ups
+  play). A six is just a six: no extra turn.
 - A game in progress is saved, so Home, a refresh, or the iPad dropping the tab in the
   background all come back to the same board via the ▶️ Carry on button.
 - All sound is synthesised in the browser (`src/audio/engine.ts`): dice rattle, hops, ladder,
@@ -20,6 +25,8 @@ sharing the screen. Little reading needed: the animals, the dice and the board d
   seconds button that erases the saved game and settings, so a child cannot do it by accident.
 - Installs to the iPad Home Screen with a proper icon and plays offline after the first visit
   (`public/manifest.webmanifest`, `public/sw.js`).
+- The board is drawn without SVG filters on purpose: Safari on the iPad dropped whole filtered
+  snakes, so shadows are plain offset shapes.
 
 ## Layout
 
@@ -28,11 +35,11 @@ Same pnpm workspace shape as Cake-Sort-Fun and Tile-Match-Fun. The game lives in
 
 | Path | What |
 | --- | --- |
-| `src/game/board.ts` | The board: numbering, where the ladders and snakes are, square centres for drawing. |
+| `src/game/board.ts` | The boards: numbering, each theme's snakes, ladders and colours, square centres for drawing. |
 | `src/game/engine.ts` | The rules: rolling, moving, jumps, winning, the rule variants. Pure functions. |
-| `src/game/engine.test.ts` | Unit tests, including a 300-game random-play check under every rule mix. |
+| `src/game/engine.test.ts` | Unit tests, including a random-play check on every board under every rule mix. |
 | `src/game/save.ts` | Saving and validating a game in progress. |
-| `src/pages/Game.tsx` | The play screen: animates each turn step by step, drives Robo. |
+| `src/pages/Game.tsx` | The play screen: animates each turn step by step, handles count-and-move taps, drives Robo. |
 | `src/components/Board.tsx` | Draws the grid, snakes and ladders as SVG, and the animal tokens over it. |
 | `src/components/geometry.ts` | Wavy snake bodies and ladder rails as SVG paths. |
 | `src/components/` | Dice, player cards, home and animal-picker screens, popups. |

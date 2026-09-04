@@ -2,9 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 interface ParentPanelProps {
   exactFinish: boolean;
-  sixAgain: boolean;
   onToggleExact: () => void;
-  onToggleSix: () => void;
   onErase: () => void;
   onClose: () => void;
 }
@@ -31,8 +29,8 @@ function Toggle({ on, label, hint, onChange }: { on: boolean; label: string; hin
   );
 }
 
-/** Grown-up settings: the rule variants and a hold-to-erase button a child cannot trigger by accident. */
-export function ParentPanel({ exactFinish, sixAgain, onToggleExact, onToggleSix, onErase, onClose }: ParentPanelProps) {
+/** Grown-up settings: the rule variant and a hold-to-erase button a child cannot trigger by accident. */
+export function ParentPanel({ exactFinish, onToggleExact, onErase, onClose }: ParentPanelProps) {
   const [holding, setHolding] = useState(false);
   const [progress, setProgress] = useState(0);
   const timer = useRef<number | null>(null);
@@ -68,15 +66,12 @@ export function ParentPanel({ exactFinish, sixAgain, onToggleExact, onToggleSix,
       <div className="bounce-in modal-card rounded-3xl p-6 max-w-sm w-full border-4 border-gray-200" onClick={e => e.stopPropagation()}>
         <h2 className="text-2xl font-black text-gray-800 mb-1">For grown-ups</h2>
         <p className="text-sm font-semibold text-gray-500 mb-4">Rule changes apply to the next new game.</p>
-        <div className="flex flex-col gap-3">
-          <Toggle on={sixAgain} label="A six rolls again" hint="Rolling a 6 earns another go." onChange={onToggleSix} />
-          <Toggle
-            on={exactFinish}
-            label="Exact finish"
-            hint="Must land right on 100. Off is easier: any roll past the end wins."
-            onChange={onToggleExact}
-          />
-        </div>
+        <Toggle
+          on={exactFinish}
+          label="Exact finish"
+          hint="Must land right on 100. Off is easier: any roll past the end wins."
+          onChange={onToggleExact}
+        />
         <div className="mt-5">
           <button
             type="button"

@@ -13,14 +13,16 @@ export interface Player {
 export interface Rules {
   /** Must land on 100 exactly; a roll that would go past is lost. */
   exactFinish: boolean;
-  /** Rolling a six earns another turn. */
-  sixAgain: boolean;
 }
 
 export type Phase = "roll" | "won";
 
 export interface GameState {
-  v: 1;
+  v: 2;
+  /** Which themed board this game is on; see game/board.ts. */
+  boardId: string;
+  /** People count and tap their own piece along instead of it moving by itself. */
+  manual: boolean;
   players: Player[];
   /** Index into `players` of whoever rolls next. */
   turn: number;
@@ -48,6 +50,4 @@ export interface TurnResult {
   roll: number;
   /** Empty when the roll was lost (exact-finish rule). */
   steps: Step[];
-  /** The same player rolls again. */
-  again: boolean;
 }

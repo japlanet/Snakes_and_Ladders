@@ -6,32 +6,48 @@ import { GamePage } from "./pages/Game";
 import { newGame } from "./game/engine";
 import type { PlayerSpec } from "./game/engine";
 import type { GameState } from "./game/types";
+import { DEFAULT_BOARD_ID, boardById } from "./game/board";
 import { clearGame, eraseAllProgress, loadGame, storeGame } from "./game/save";
 import { useStoredFlag } from "./hooks/useStoredFlag";
 import { audio } from "./audio/engine";
 
 type Screen = { name: "home" } | { name: "setup"; mode: Mode } | { name: "game"; state: GameState; run: number };
 
+const BOARD_KEY = "snakes-ladders-board";
+
+function readBoard(): string {
+  try {
+    return boardById(localStorage.getItem(BOARD_KEY) ?? DEFAULT_BOARD_ID).id;
+  } catch {
+    return DEFAULT_BOARD_ID;
+  }
+}
+
 export default function App() {
   const [screen, setScreen] = useState<Screen>({ name: "home" });
   const [exactFinish, setExactFinish] = useStoredFlag("snakes-ladders-exact", false);
-  const [sixAgain, setSixAgain] = useStoredFlag("snakes-ladders-six", true);
+  const [manual, setManual] = useStoredFlag("snakes-ladders-manual", false);
+  const [boardId, setBoardId] = useState<string>(readBoard);
   const [run, setRun] = useState(0);
 
   const startGame = useCallback(
-    (specs: PlayerSpec[]) => {
-      const state = newGame(specs, { exactFinish, sixAgain });
+    (specs: PlayerSpec[], board: string) => {
+      const state = newGame(specs, { rules: { exactFinish }, boardId: board, manual });
       storeGame(state);
       setRun(r => r + 1);
       setScreen({ name: "game", state, run: run + 1 });
     },
-    [exactFinish, sixAgain, run],
+    [exactFinish, manual, run],
   );
 
   const handlePlay = useCallback(
-    (specs: PlayerSpec[]) => {
+    (specs: PlayerSpec[], board: string) => {
       audio.unlock();
-      startGame(specs);
+      setBoardId(board);
+      try {
+        localStorage.setItem(BOARD_KEY, board);
+      } catch {}
+      startGame(specs, board);
     },
     [startGame],
   );
@@ -58,14 +74,14 @@ export default function App() {
         onMenu={handleMenu}
         onPlayAgain={() => {
           clearGame();
-          startGame(specs);
+          startGame(specs, screen.state.boardId);
         }}
       />
     );
   }
 
   if (screen.name === "setup") {
-    return <Setup mode={screen.mode} onPlay={handlePlay} onBack={handleMenu} />;
+    return <Setup mode={screen.mode} boardId={boardId} onPlay={handlePlay} onBack={handleMenu} />;
   }
 
   return (
@@ -76,10 +92,10 @@ export default function App() {
         audio.unlock();
         setScreen({ name: "setup", mode });
       }}
+      manual={manual}
+      onToggleManual={() => setManual(v => !v)}
       exactFinish={exactFinish}
-      sixAgain={sixAgain}
       onToggleExact={() => setExactFinish(v => !v)}
-      onToggleSix={() => setSixAgain(v => !v)}
       onEraseAll={handleEraseAll}
     />
   );
