@@ -10,8 +10,9 @@ sharing the screen. Little reading needed: the animals, the dice and the board d
 - **Two ways to move.** By default tokens hop one square at a time by themselves, with a boing
   per hop, then climb (bright arpeggio) or slide (hiss) on a ladder foot or a snake head. Switch
   the home-screen toggle to **"I move my piece"** and the player has to count the roll out
-  themselves, tapping the next square each time; a wrong tap wiggles the piece, and after two
-  wrong taps the right square starts to pulse. Ladders and snakes still play by themselves once
+  themselves: either tap every square along the way, or tap straight onto the square the roll
+  lands on and the piece hops there itself. A wrong tap wiggles the piece, and after two
+  wrong taps the next square starts to pulse. Ladders and snakes still play by themselves once
   the count is done. Robo always moves its own piece.
 - One rule option, set from the small "Parents" link on the home screen: **exact finish** (off by
   default, so any roll past 100 wins; on means an overshooting roll is lost, the way grown-ups
