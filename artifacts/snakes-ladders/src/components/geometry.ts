@@ -81,7 +81,7 @@ export function ladderShape(bottom: Point, top: Point): LadderShape {
     y2: top.y + py * s,
   });
   const rungs: Segment[] = [];
-  const spacing = 0.42;
+  const spacing = 0.48;
   for (let d = 0.28; d <= len - 0.28; d += spacing) {
     const cx = bottom.x + ux * d;
     const cy = bottom.y + uy * d;
