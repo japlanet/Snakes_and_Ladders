@@ -2,7 +2,7 @@
  * A game in progress is kept in localStorage so that Home, a refresh, or the
  * iPad dropping the tab in the background all come back to the same board.
  */
-import { LAST } from "./board.ts";
+import { BOARDS, LAST } from "./board.ts";
 import type { GameState, Player } from "./types.ts";
 
 const PREFIX = "snakes-ladders-";
@@ -27,7 +27,9 @@ function isPlayer(x: unknown): x is Player {
 export function isGameState(x: unknown): x is GameState {
   if (typeof x !== "object" || x === null) return false;
   const s = x as Record<string, unknown>;
-  if (s.v !== 1) return false;
+  if (s.v !== 2) return false;
+  if (typeof s.boardId !== "string" || !BOARDS.some(b => b.id === s.boardId)) return false;
+  if (typeof s.manual !== "boolean") return false;
   if (!Array.isArray(s.players) || s.players.length < 2 || !s.players.every(isPlayer)) return false;
   if (!Number.isInteger(s.turn) || (s.turn as number) < 0 || (s.turn as number) >= s.players.length) return false;
   if (s.phase !== "roll" && s.phase !== "won") return false;
@@ -35,7 +37,7 @@ export function isGameState(x: unknown): x is GameState {
   if (s.lastRoll !== null && !(Number.isInteger(s.lastRoll) && (s.lastRoll as number) >= 1 && (s.lastRoll as number) <= 6)) return false;
   if (typeof s.rules !== "object" || s.rules === null) return false;
   const r = s.rules as Record<string, unknown>;
-  if (typeof r.exactFinish !== "boolean" || typeof r.sixAgain !== "boolean") return false;
+  if (typeof r.exactFinish !== "boolean") return false;
   if (!Number.isInteger(s.rolls) || (s.rolls as number) < 0) return false;
   return true;
 }

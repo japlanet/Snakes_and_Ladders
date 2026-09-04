@@ -8,14 +8,14 @@ interface HomeProps {
   saved: GameState | null;
   onContinue: () => void;
   onPickMode: (mode: Mode) => void;
+  manual: boolean;
+  onToggleManual: () => void;
   exactFinish: boolean;
-  sixAgain: boolean;
   onToggleExact: () => void;
-  onToggleSix: () => void;
   onEraseAll: () => void;
 }
 
-export function Home({ saved, onContinue, onPickMode, exactFinish, sixAgain, onToggleExact, onToggleSix, onEraseAll }: HomeProps) {
+export function Home({ saved, onContinue, onPickMode, manual, onToggleManual, exactFinish, onToggleExact, onEraseAll }: HomeProps) {
   const [parents, setParents] = useState(false);
 
   return (
@@ -78,26 +78,33 @@ export function Home({ saved, onContinue, onPickMode, exactFinish, sixAgain, onT
         </div>
       </div>
 
-      <div className="safe-bottom px-4 pt-2 flex items-end justify-end">
+      <div className="safe-bottom px-4 pt-2 flex items-end justify-center relative">
         <button
           type="button"
           onClick={() => setParents(true)}
-          className="text-xs font-semibold text-gray-500/70 underline-offset-2 hover:underline px-2 py-1"
+          className="absolute right-4 bottom-4 text-xs font-semibold text-gray-500/70 underline-offset-2 hover:underline px-2 py-1"
           aria-label="Settings for grown-ups"
         >
           Parents
         </button>
+        <button
+          onClick={onToggleManual}
+          className={`game-btn candy flex items-center gap-3 px-5 py-3 rounded-full font-black text-lg ${
+            manual ? "bg-gradient-to-b from-amber-200 to-amber-300 candy-amber text-amber-900" : "bg-gradient-to-b from-emerald-100 to-emerald-200 candy-emerald text-emerald-900"
+          }`}
+          aria-label={manual ? "You count and move your own piece. Tap to let pieces move by themselves." : "Pieces move by themselves. Tap to count and move your own piece."}
+          aria-pressed={manual}
+        >
+          <span className="text-3xl" role="img" aria-hidden="true">
+            {manual ? "👆" : "✨"}
+          </span>
+          <span>{manual ? "I move my piece" : "Pieces move themselves"}</span>
+          <span className={`inline-block w-12 h-7 rounded-full relative transition-colors ${manual ? "bg-green-500" : "bg-gray-400"}`} aria-hidden="true">
+            <span className="absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-all" style={{ left: manual ? 26 : 4 }} />
+          </span>
+        </button>
       </div>
-      {parents && (
-        <ParentPanel
-          exactFinish={exactFinish}
-          sixAgain={sixAgain}
-          onToggleExact={onToggleExact}
-          onToggleSix={onToggleSix}
-          onErase={onEraseAll}
-          onClose={() => setParents(false)}
-        />
-      )}
+      {parents && <ParentPanel exactFinish={exactFinish} onToggleExact={onToggleExact} onErase={onEraseAll} onClose={() => setParents(false)} />}
     </div>
   );
 }
