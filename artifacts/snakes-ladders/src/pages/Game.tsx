@@ -31,6 +31,12 @@ const STALL_GRACE_MS = 2500;
 
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
+/** Keep an unfinished game for Carry on; a finished one is not worth resuming. */
+function save(state: GameState) {
+  if (state.phase === "won") clearGame();
+  else storeGame(state);
+}
+
 /** How long a move takes to show: the roll, the hops, and any ladder or snake. */
 function expectedMs(steps: Step[], counts: boolean): number {
   const roll = ROLL_MS + 380;
@@ -152,8 +158,7 @@ export function GamePage({ initial, onMenu, onPlayAgain }: GamePageProps) {
     pendingRef.current = null;
     stateRef.current = result.state;
     setState(result.state);
-    if (result.state.phase === "won") clearGame();
-    else storeGame(result.state);
+    save(result.state);
     busyRef.current = false;
     setBusy(false);
     if (result.state.phase === "won") {
@@ -200,6 +205,8 @@ export function GamePage({ initial, onMenu, onPlayAgain }: GamePageProps) {
       const before = stateRef.current;
       const roll = rollDie();
       const result = playTurn(before, roll);
+      // Saved before the show starts, so Home or a refresh mid-move cannot undo the roll and roll again.
+      save(result.state);
       const idx = result.player;
       const counts = before.manual && before.players[idx].kind === "human" && result.steps.length > 0;
       pendingRef.current = { result, started: performance.now(), expectMs: expectedMs(result.steps, counts), counting: false };
@@ -407,7 +414,7 @@ export function GamePage({ initial, onMenu, onPlayAgain }: GamePageProps) {
             aria-label={music ? "Music on" : "Music off"}
             aria-pressed={music}
           >
-            {music ? "🎵" : "🎵̸"}
+            <span className={music ? undefined : "grayscale opacity-50"}>🎵</span>
           </button>
         </div>
       </div>

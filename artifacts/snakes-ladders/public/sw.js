@@ -5,7 +5,9 @@
  *   scripts and styles (read out of index.html), the fonts (read out of the
  *   styles), the icons and the manifest. So one visit is enough to play offline.
  * - The page itself is fetched network-first, so a new deploy shows up on the
- *   next launch when online, and the cached copy is used when offline.
+ *   next launch when online. The cached copy is used when offline, when the
+ *   server answers with an error, or when the network has not answered within
+ *   a few seconds (weak wifi), so the game never sits on a blank screen.
  * - Built assets carry a content hash in their name, so they are cache-first.
  * - All the games share japlanet.github.io, and so share one set of caches.
  *   This worker only ever deletes caches whose names start with its own
@@ -14,6 +16,8 @@
 const PREFIX = "snakes-ladders-";
 const CACHE = PREFIX + "v2";
 const SCOPE = new URL(self.registration.scope).pathname;
+/** How long the page waits for the network before opening the saved copy. */
+const NETWORK_WAIT_MS = 3000;
 const EXTRAS = ["manifest.webmanifest", "favicon.svg", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
 
 function sameOriginUrls(text, base, pattern) {
@@ -72,20 +76,27 @@ async function pruneStale(cache, html, shell) {
   }
 }
 
-async function page() {
+async function page(event) {
   const cache = await caches.open(CACHE);
   const shell = new URL(SCOPE, self.location.origin).href;
-  try {
-    const fresh = await fetch(shell, { cache: "no-cache" });
+  const network = fetch(shell, { cache: "no-cache" }).then(async fresh => {
     if (fresh.ok) {
       const html = await fresh.clone().text();
       await cache.put(shell, fresh.clone());
       pruneStale(cache, html, shell).catch(() => undefined);
     }
     return fresh;
-  } catch {
-    return (await cache.match(shell)) || (await cache.match(shell + "index.html")) || Response.error();
-  }
+  });
+  // Even if the saved copy is shown first, let the download finish so the next launch is up to date.
+  event.waitUntil(network.catch(() => undefined));
+
+  const timeout = new Promise(resolve => setTimeout(resolve, NETWORK_WAIT_MS, null));
+  const first = await Promise.race([network, timeout]).catch(() => null);
+  if (first && first.ok) return first;
+  const saved = (await cache.match(shell)) || (await cache.match(shell + "index.html"));
+  if (saved) return saved;
+  // Nothing saved yet: all there is left to do is wait for the network, error page or not.
+  return network.catch(() => Response.error());
 }
 
 async function cacheFirst(request) {
@@ -116,7 +127,7 @@ self.addEventListener("fetch", event => {
   if (url.origin !== self.location.origin || !url.pathname.startsWith(SCOPE)) return;
 
   if (request.mode === "navigate") {
-    event.respondWith(page());
+    event.respondWith(page(event));
   } else if (url.pathname.startsWith(SCOPE + "assets/")) {
     event.respondWith(cacheFirst(request));
   } else {
