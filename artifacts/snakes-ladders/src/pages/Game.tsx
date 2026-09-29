@@ -26,7 +26,28 @@ const CPU_THINK_MS = 900;
 /** Wrong taps before the next square starts to pulse. */
 const HINT_AFTER = 2;
 
+/** How far past its expected length a turn may run before it counts as stalled. */
+const STALL_GRACE_MS = 2500;
+
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+
+/** How long a move takes to show: the roll, the hops, and any ladder or snake. */
+function expectedMs(steps: Step[], counts: boolean): number {
+  const roll = ROLL_MS + 380;
+  if (counts) return roll;
+  if (steps.length === 0) return roll + 650;
+  const hops = steps.filter(s => s.kind === "hop").length;
+  return roll + hops * (HOP_MS + 40) + (steps.length - hops) * (320 + SLIDE_MS + 120);
+}
+
+/** The turn being shown, so a stalled one can be finished (see finishNow). */
+interface Pending {
+  result: TurnResult;
+  started: number;
+  expectMs: number;
+  /** Waiting for the player to count it out: no rush, never "stalled". */
+  counting: boolean;
+}
 
 /** A move waiting for the player to count it out by tapping squares. */
 interface Counting {
@@ -84,6 +105,13 @@ export function GamePage({ initial, onMenu, onPlayAgain }: GamePageProps) {
 
   // ---- showing a move ------------------------------------------------------
 
+  // Every turn gets an id. The animation keeps going only while its id is
+  // current, so a stalled turn can be finished at once (see finishNow) and the
+  // old animation quietly stops if it ever wakes up.
+  const turnRef = useRef(0);
+  const pendingRef = useRef<Pending | null>(null);
+  const live = useCallback((id: number) => alive.current && turnRef.current === id, []);
+
   const hopTo = useCallback((idx: number, square: number, hopIndex: number) => {
     setSliding(false);
     setSlideDuration(HOP_MS);
@@ -92,34 +120,36 @@ export function GamePage({ initial, onMenu, onPlayAgain }: GamePageProps) {
     audio.playHop(hopIndex);
   }, []);
 
-  /** Plays steps[from..] on the board. Resolves false if the page went away. */
+  /** Plays steps[from..] on the board. Resolves false if the turn was finished early or the page went away. */
   const animate = useCallback(
-    async (idx: number, steps: Step[], from = 0): Promise<boolean> => {
+    async (id: number, idx: number, steps: Step[], from = 0): Promise<boolean> => {
       for (let k = from; k < steps.length; k++) {
+        if (!live(id)) return false;
         const step = steps[k];
         if (step.kind === "hop") {
           hopTo(idx, step.to, k);
           await sleep(HOP_MS + 40);
         } else {
           await sleep(320);
-          if (!alive.current) return false;
+          if (!live(id)) return false;
           setSliding(true);
           setSlideDuration(SLIDE_MS);
           if (step.kind === "ladder") audio.playLadder();
           else audio.playSnake();
           setShown(s => s.map((p, i) => (i === idx ? step.to : p)));
           await sleep(SLIDE_MS + 120);
+          if (!live(id)) return false;
           setSliding(false);
         }
-        if (!alive.current) return false;
       }
-      return true;
+      return live(id);
     },
-    [hopTo],
+    [hopTo, live],
   );
 
   /** The move is over: make it official, save, and hand over. */
   const commit = useCallback(async (result: TurnResult) => {
+    pendingRef.current = null;
     stateRef.current = result.state;
     setState(result.state);
     if (result.state.phase === "won") clearGame();
@@ -136,49 +166,96 @@ export function GamePage({ initial, onMenu, onPlayAgain }: GamePageProps) {
     }
   }, []);
 
+  /**
+   * Finish the turn in progress straight away: pieces jump to where they end
+   * up and play moves on. Used when a turn has stalled, for example when the
+   * iPad paused the page mid-roll, so the dice can never stay stuck.
+   */
+  const finishNow = useCallback(() => {
+    const p = pendingRef.current;
+    turnRef.current++;
+    countingRef.current = null;
+    setCounting(null);
+    setRolling(false);
+    setNope(null);
+    setSliding(false);
+    if (!p) {
+      busyRef.current = false;
+      setBusy(false);
+      return;
+    }
+    setFace(p.result.roll);
+    setShown(p.result.state.players.map(pl => pl.pos));
+    void commit(p.result);
+  }, [commit]);
+
   // ---- a turn --------------------------------------------------------------
 
   const takeTurn = useCallback(async () => {
     if (busyRef.current || stateRef.current.phase !== "roll") return;
     busyRef.current = true;
     setBusy(true);
-    audio.unlock();
+    const id = ++turnRef.current;
+    try {
+      const before = stateRef.current;
+      const roll = rollDie();
+      const result = playTurn(before, roll);
+      const idx = result.player;
+      const counts = before.manual && before.players[idx].kind === "human" && result.steps.length > 0;
+      pendingRef.current = { result, started: performance.now(), expectMs: expectedMs(result.steps, counts), counting: false };
 
-    const roll = rollDie();
-    setRolling(true);
-    audio.playRoll();
-    await sleep(ROLL_MS);
-    if (!alive.current) return;
-    setRolling(false);
-    setFace(roll);
+      audio.unlock();
+      setRolling(true);
+      audio.playRoll();
+      await sleep(ROLL_MS);
+      if (!live(id)) return;
+      setRolling(false);
+      setFace(roll);
+      await sleep(380);
+      if (!live(id)) return;
 
-    const before = stateRef.current;
-    const result = playTurn(before, roll);
-    const idx = result.player;
-    await sleep(380);
-    if (!alive.current) return;
+      if (result.steps.length === 0) {
+        setNope(idx);
+        audio.playNope();
+        await sleep(650);
+        if (!live(id)) return;
+        setNope(null);
+        await commit(result);
+        return;
+      }
 
-    if (result.steps.length === 0) {
-      setNope(idx);
-      audio.playNope();
-      await sleep(650);
-      if (!alive.current) return;
-      setNope(null);
+      if (counts) {
+        // Count-and-move: the player taps the squares; see handleSquareTap. No rush, so no stall check meanwhile.
+        pendingRef.current = { ...pendingRef.current, counting: true };
+        const c: Counting = { result, next: 0, wrong: 0 };
+        countingRef.current = c;
+        setCounting(c);
+        return;
+      }
+
+      if (!(await animate(id, idx, result.steps))) return;
       await commit(result);
-      return;
+    } catch {
+      if (live(id)) finishNow();
     }
+  }, [animate, commit, finishNow, live]);
 
-    if (before.manual && before.players[idx].kind === "human") {
-      // Count-and-move: the player taps the squares; see handleSquareTap.
-      const c: Counting = { result, next: 0, wrong: 0 };
-      countingRef.current = c;
-      setCounting(c);
-      return;
-    }
-
-    if (!(await animate(idx, result.steps))) return;
-    await commit(result);
-  }, [animate, commit]);
+  /** The counting is done; the rest of the move (a ladder or snake) plays by itself. */
+  const playRest = useCallback(
+    async (c: Counting, from: number) => {
+      countingRef.current = null;
+      setCounting(null);
+      const id = turnRef.current;
+      pendingRef.current = { result: c.result, started: performance.now(), expectMs: expectedMs(c.result.steps.slice(from), false), counting: false };
+      try {
+        if (!(await animate(id, c.result.player, c.result.steps, from))) return;
+        await commit(c.result);
+      } catch {
+        if (live(id)) finishNow();
+      }
+    },
+    [animate, commit, finishNow, live],
+  );
 
   const handleSquareTap = useCallback(
     async (square: number) => {
@@ -191,10 +268,7 @@ export function GamePage({ initial, onMenu, onPlayAgain }: GamePageProps) {
       const landing = hops[hops.length - 1].to;
       if (square === landing && square !== step.to) {
         // Counted in their head and tapped where the roll lands: the piece hops the rest of the way itself.
-        countingRef.current = null;
-        setCounting(null);
-        if (!(await animate(idx, c.result.steps, c.next))) return;
-        await commit(c.result);
+        await playRest(c, c.next);
         return;
       }
       if (square !== step.to) {
@@ -218,13 +292,35 @@ export function GamePage({ initial, onMenu, onPlayAgain }: GamePageProps) {
         return;
       }
       // Counted all the way: any ladder or snake plays by itself.
-      countingRef.current = null;
-      setCounting(null);
-      if (!(await animate(idx, c.result.steps, after))) return;
-      await commit(c.result);
+      await playRest(c, after);
     },
-    [animate, commit, hopTo],
+    [hopTo, playRest],
   );
+
+  // A turn that has run well past its expected length has stalled: finish it.
+  // Checked every second, and at once when the iPad wakes the page up or the
+  // child touches the screen, since those are when a stall shows.
+  useEffect(() => {
+    const check = () => {
+      const p = pendingRef.current;
+      if (p && !p.counting && performance.now() - p.started > p.expectMs + STALL_GRACE_MS) finishNow();
+    };
+    const onVisible = () => {
+      if (!document.hidden) check();
+    };
+    const timer = setInterval(check, 1000);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pageshow", check);
+    window.addEventListener("focus", check);
+    window.addEventListener("pointerdown", check, true);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pageshow", check);
+      window.removeEventListener("focus", check);
+      window.removeEventListener("pointerdown", check, true);
+    };
+  }, [finishNow]);
 
   // Robo rolls by itself once the board has settled.
   const current = state.players[state.turn];
