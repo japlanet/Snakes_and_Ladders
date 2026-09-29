@@ -43,7 +43,6 @@ jobs:
         env:
           # Must match the GitHub repository name, e.g. /Snakes_and_Ladders/
           BASE_PATH: /Snakes_and_Ladders/
-          PORT: 3000
           NODE_ENV: production
 
       - name: Add .nojekyll

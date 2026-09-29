@@ -3,7 +3,7 @@
  * screen, so the whole thing is unit tested in engine.test.ts.
  */
 import { DEFAULT_BOARD_ID, LAST, boardById, jumpsOf } from "./board.ts";
-import type { GameState, Player, PlayerKind, Rules, Step, TurnResult } from "./types.ts";
+import type { GameState, PlayerKind, Rules, Step, TurnResult } from "./types.ts";
 
 export interface PlayerSpec {
   name: string;
@@ -38,10 +38,6 @@ export function newGame(specs: PlayerSpec[], options: GameOptions = {}): GameSta
 export function rollDie(rng: () => number = Math.random): number {
   const r = Math.min(Math.max(rng(), 0), 0.999999);
   return 1 + Math.floor(r * 6);
-}
-
-export function currentPlayer(state: GameState): Player {
-  return state.players[state.turn];
 }
 
 /**

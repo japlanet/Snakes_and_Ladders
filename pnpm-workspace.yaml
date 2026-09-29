@@ -2,14 +2,10 @@
 # them (supply-chain defence, same policy as the Cake Sort and Tile Match workspaces).
 minimumReleaseAge: 1440
 
-minimumReleaseAgeExclude:
-  - '@replit/*'
-
 packages:
   - artifacts/*
 
 catalog:
-  '@replit/vite-plugin-runtime-error-modal': ^0.0.6
   '@tailwindcss/vite': ^4.1.14
   '@types/node': ^25.3.3
   '@types/react': ^19.2.0

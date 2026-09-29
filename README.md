@@ -25,7 +25,8 @@ sharing the screen. Little reading needed: the animals, the dice and the board d
 - The 🔄 button starts again after a picture-only yes/no. The Parents panel has a hold-for-two-
   seconds button that erases the saved game and settings, so a child cannot do it by accident.
 - Installs to the iPad Home Screen with a proper icon and plays offline after the first visit
-  (`public/manifest.webmanifest`, `public/sw.js`).
+  (`public/manifest.webmanifest`, `public/sw.js`). On weak wifi it opens the saved copy after
+  three seconds instead of waiting on the network.
 - Fonts (Nunito and Fredoka, SIL Open Font License) are bundled with the game from `@fontsource`, so it
   makes no requests to Google or any other site, and they work offline too.
 - The board is drawn without SVG filters on purpose: Safari on the iPad dropped whole filtered
@@ -54,13 +55,14 @@ Same pnpm workspace shape as Cake-Sort-Fun and Tile-Match-Fun. The game lives in
 pnpm install
 pnpm --filter @workspace/snakes-ladders run test        # rules tests (node --test, no extra deps)
 pnpm --filter @workspace/snakes-ladders run typecheck
-PORT=5174 BASE_PATH=/ pnpm --filter @workspace/snakes-ladders run dev
+BASE_PATH=/ pnpm --filter @workspace/snakes-ladders run dev
 pnpm run build                                          # typecheck + tests + vite build
 ```
 
 ## Deploying to GitHub Pages
 
 `.github/workflows/deploy.yml` builds and publishes on every push to `main`. `BASE_PATH` in
-that file must match the repository name (`/Snakes_and_Ladders/` by default). In the repository
+that file must match the repository name (`/Snakes_and_Ladders/`, which is also the default in
+`vite.config.ts`). In the repository
 settings, set Pages to deploy from GitHub Actions. Then open the Pages URL in Safari on the
 iPad, tap Share, and "Add to Home Screen".

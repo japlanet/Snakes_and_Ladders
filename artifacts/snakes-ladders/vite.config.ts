@@ -2,25 +2,20 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
+// Only the dev and preview servers use a port; a build does not need one.
 const rawPort = process.env.PORT;
-if (!rawPort) {
-  throw new Error("PORT environment variable is required but was not provided.");
-}
-const port = Number(rawPort);
-if (Number.isNaN(port) || port <= 0) {
+const port = rawPort ? Number(rawPort) : undefined;
+if (port !== undefined && !(Number.isInteger(port) && port > 0)) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-const basePath = process.env.BASE_PATH;
-if (!basePath) {
-  throw new Error("BASE_PATH environment variable is required but was not provided.");
-}
+// Where the game is served from. The default suits GitHub Pages for this repository.
+const basePath = process.env.BASE_PATH || "/Snakes_and_Ladders/";
 
 export default defineConfig({
   base: basePath,
-  plugins: [react(), tailwindcss(), runtimeErrorOverlay()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
