@@ -26,6 +26,8 @@ sharing the screen. Little reading needed: the animals, the dice and the board d
   seconds button that erases the saved game and settings, so a child cannot do it by accident.
 - Installs to the iPad Home Screen with a proper icon and plays offline after the first visit
   (`public/manifest.webmanifest`, `public/sw.js`).
+- Fonts (Nunito and Fredoka, SIL Open Font License) are bundled with the game from `@fontsource`, so it
+  makes no requests to Google or any other site, and they work offline too.
 - The board is drawn without SVG filters on purpose: Safari on the iPad dropped whole filtered
   snakes, so shadows are plain offset shapes.
 
