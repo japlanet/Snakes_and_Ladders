@@ -176,9 +176,10 @@ export function Board({ board, tokens, onSquareTap, hint, hintColor }: BoardProp
       )}
       {tokens.map((t, i) => {
         const c = centerOf(t.pos);
-        // Two tokens on one square sit offset instead of on top of each other.
-        const ox = (i - (tokens.length - 1) / 2) * 0.3;
-        const oy = (i - (tokens.length - 1) / 2) * 0.24;
+        // A token sits in the middle of its square; two on one square sit offset instead of on top of each other.
+        const shared = tokens.some(o => o !== t && o.pos === t.pos);
+        const ox = shared ? (i - (tokens.length - 1) / 2) * 0.3 : 0;
+        const oy = shared ? (i - (tokens.length - 1) / 2) * 0.24 : 0;
         const left = ((c.x + ox - TOKEN_SIZE / 2) / BOARD_W) * 100;
         const top = ((c.y + oy - TOKEN_SIZE / 2) / BOARD_H) * 100;
         return (

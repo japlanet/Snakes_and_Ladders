@@ -414,7 +414,7 @@ export function GamePage({ initial, onMenu, onPlayAgain }: GamePageProps) {
             aria-label={music ? "Music on" : "Music off"}
             aria-pressed={music}
           >
-            {music ? "🎵" : "🎵̸"}
+            <span className={music ? undefined : "grayscale opacity-50"}>🎵</span>
           </button>
         </div>
       </div>
