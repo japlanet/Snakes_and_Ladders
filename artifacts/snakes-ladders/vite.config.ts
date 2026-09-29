@@ -15,6 +15,8 @@ const basePath = process.env.BASE_PATH || "/Snakes_and_Ladders/";
 
 export default defineConfig({
   base: basePath,
+  // Shown as "Version from …" next to the Check for update button (src/update.ts).
+  define: { __BUILD_TIME__: JSON.stringify(new Date().toISOString()) },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

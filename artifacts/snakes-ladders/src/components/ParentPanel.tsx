@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { UpdateButton } from "./UpdateButton";
 
 interface ParentPanelProps {
   exactFinish: boolean;
@@ -85,6 +86,9 @@ export function ParentPanel({ exactFinish, onToggleExact, onErase, onClose }: Pa
             <span className="absolute inset-y-0 left-0 bg-rose-400/60" style={{ width: `${progress * 100}%` }} aria-hidden="true" />
             <span className="relative">{holding ? "Keep holding…" : "Hold to erase everything"}</span>
           </button>
+        </div>
+        <div className="mt-4">
+          <UpdateButton />
         </div>
         <button type="button" onClick={onClose} className="mt-4 w-full rounded-2xl bg-gray-200 px-4 py-3 font-black text-gray-700">
           Close

@@ -27,6 +27,10 @@ sharing the screen. Little reading needed: the animals, the dice and the board d
 - Installs to the iPad Home Screen with a proper icon and plays offline after the first visit
   (`public/manifest.webmanifest`, `public/sw.js`). On weak wifi it opens the saved copy after
   three seconds instead of waiting on the network.
+- Keeps itself up to date: the page loads network-first, and an installed app that iOS only
+  resumes (never relaunches) checks for a new version when it comes back after 5+ minutes away and
+  reloads into it. The Parents panel has **Check for update** for doing it on demand, with the build
+  date underneath (`src/update.ts`). No need to delete and re-add the Home Screen icon.
 - Fonts (Nunito and Fredoka, SIL Open Font License) are bundled with the game from `@fontsource`, so it
   makes no requests to Google or any other site, and they work offline too.
 - The board is drawn without SVG filters on purpose: Safari on the iPad dropped whole filtered
